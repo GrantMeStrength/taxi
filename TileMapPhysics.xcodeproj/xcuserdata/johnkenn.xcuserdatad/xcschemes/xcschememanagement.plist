@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>SchemeUserState</key>
+	<dict>
+		<key>Rideshare Riot.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>RideshareRiotTV.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>D56C18CA1DC988C800B4AE3D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D5D8F6E91D315920004E604F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D5D8F7031D315920004E604F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D5D8F70E1D315920004E604F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+	</dict>
+</dict>
+</plist>
