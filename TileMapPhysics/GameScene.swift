@@ -9,6 +9,7 @@
 import SpriteKit
 import UIKit
 import GameplayKit
+import GameController
 
 
 struct SpriteCategories
@@ -154,6 +155,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     #if os(tvOS)
     var menuView : MenuBottonView!
     #endif
+    
+    // Game Controller
+    var gameController: GCController?
+    var lastStickDirection: Direction = .none
     
     func DefineLevel()
     {
@@ -442,6 +447,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.physicsWorld.contactDelegate = self
         ZoomIn()
         addSwipe()
+        setupControllerObservers()
         
         
         
@@ -563,63 +569,7 @@ radarNode?.setScale(2.0)
     
     @objc func tapped(sender: UITapGestureRecognizer)
     {
-        
-        
-        if lightningActive || lightningCount == 0
-        {
-            return
-        }
-        
-        // Blink screen
-        
-        
-        lightning?.removeAllActions()
-        
-        if settings.AudioEffects!
-        {
-            lightning?.run(sounds.bonus3)
-        }
-        
-        let fadeIn = SKAction.colorize(with: .red, colorBlendFactor: 1, duration: 0.05)
-        let fadeOut = SKAction.colorize(with: .white, colorBlendFactor: 1, duration: 0.05)
-        
-        let zoomIn = SKAction.resize(toWidth: 32, height: 32, duration: 1)
-        let Sequence = SKAction.sequence([fadeIn,fadeOut])
-        
-        
-        lightning?.run(SKAction.repeatForever(Sequence))
-        
-        
-        
-        lightning?.run(zoomIn)
-        
-        
-        
-        // make lighting appear
-        
-        lightningCount -= 1
-        labelLightning?.text = String("x\(lightningCount)")
-        lightningTime = 0
-        lightning?.position = GoodGuy.position()
-        lightning?.isHidden = false
-        lightningActive = true
-        
-        lightningLimit = 7
-        
-        
-        /*
-         
-         
-         if (gameCamera?.xScale)! < CGFloat(1.5)
-         {
-         gameCamera?.setScale(3.5)
-         }
-         else
-         {
-         gameCamera?.setScale(1.4)
-         }
-         */
-        
+        triggerLightning()
     }
     
     
@@ -692,36 +642,212 @@ radarNode?.setScale(2.0)
     
     @objc func handleSwipe(sender: UISwipeGestureRecognizer) {
         
-        
         switch (sender.direction)
         {
-        case UISwipeGestureRecognizer.Direction.right :  GoodGuy.nextDirection = .right
-        case UISwipeGestureRecognizer.Direction.left :  GoodGuy.nextDirection = .left
-        case UISwipeGestureRecognizer.Direction.up :  GoodGuy.nextDirection = .up
-        case UISwipeGestureRecognizer.Direction.down :  GoodGuy.nextDirection = .down
+        case UISwipeGestureRecognizer.Direction.right :  queueDirection(.right)
+        case UISwipeGestureRecognizer.Direction.left :  queueDirection(.left)
+        case UISwipeGestureRecognizer.Direction.up :  queueDirection(.up)
+        case UISwipeGestureRecognizer.Direction.down :  queueDirection(.down)
         default: break;
             
         }
         
+    }
+    
+    
+    // MARK: - Game Controller Support
+    
+    func queueDirection(_ direction: Direction) {
+        GoodGuy.nextDirection = direction
         
-        if (GoodGuy.currentDirection == .up && GoodGuy.nextDirection == .right)
-            || (GoodGuy.currentDirection == .right && GoodGuy.nextDirection == .down)
-            || (GoodGuy.currentDirection == .down && GoodGuy.nextDirection == .left)
-            || (GoodGuy.currentDirection == .left && GoodGuy.nextDirection == .up)
+        if (GoodGuy.currentDirection == .up && direction == .right)
+            || (GoodGuy.currentDirection == .right && direction == .down)
+            || (GoodGuy.currentDirection == .down && direction == .left)
+            || (GoodGuy.currentDirection == .left && direction == .up)
         {
             GoodGuy.BlinkRight()
         }
         
-        if (GoodGuy.currentDirection == .up && GoodGuy.nextDirection == .left)
-            || (GoodGuy.currentDirection == .left && GoodGuy.nextDirection == .down)
-            || (GoodGuy.currentDirection == .down && GoodGuy.nextDirection == .right)
-            || (GoodGuy.currentDirection == .right && GoodGuy.nextDirection == .up)
+        if (GoodGuy.currentDirection == .up && direction == .left)
+            || (GoodGuy.currentDirection == .left && direction == .down)
+            || (GoodGuy.currentDirection == .down && direction == .right)
+            || (GoodGuy.currentDirection == .right && direction == .up)
         {
             GoodGuy.BlinkLeft()
         }
-        
     }
     
+    func triggerLightning() {
+        if pause { return }
+        #if os(tvOS)
+        if !menuView.isHidden { return }
+        #endif
+        if lightningActive || lightningCount == 0 { return }
+        
+        lightning?.removeAllActions()
+        
+        if settings.AudioEffects! {
+            lightning?.run(sounds.bonus3)
+        }
+        
+        let fadeIn = SKAction.colorize(with: .red, colorBlendFactor: 1, duration: 0.05)
+        let fadeOut = SKAction.colorize(with: .white, colorBlendFactor: 1, duration: 0.05)
+        let zoomIn = SKAction.resize(toWidth: 32, height: 32, duration: 1)
+        let sequence = SKAction.sequence([fadeIn, fadeOut])
+        
+        lightning?.run(SKAction.repeatForever(sequence))
+        lightning?.run(zoomIn)
+        
+        lightningCount -= 1
+        labelLightning?.text = String("x\(lightningCount)")
+        lightningTime = 0
+        lightning?.position = GoodGuy.position()
+        lightning?.isHidden = false
+        lightningActive = true
+        lightningLimit = 7
+    }
+    
+    func setupControllerObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(controllerDidConnect), name: .GCControllerDidConnect, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(controllerDidDisconnect), name: .GCControllerDidDisconnect, object: nil)
+        
+        if let controller = GCController.controllers().first {
+            setupController(controller)
+        }
+    }
+    
+    func teardownControllerObservers() {
+        NotificationCenter.default.removeObserver(self, name: .GCControllerDidConnect, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .GCControllerDidDisconnect, object: nil)
+        gameController?.extendedGamepad?.dpad.valueChangedHandler = nil
+        gameController?.extendedGamepad?.leftThumbstick.valueChangedHandler = nil
+        gameController?.extendedGamepad?.buttonA.valueChangedHandler = nil
+        gameController?.extendedGamepad?.buttonMenu.valueChangedHandler = nil
+        gameController = nil
+    }
+    
+    @objc func controllerDidConnect(_ notification: Notification) {
+        guard gameController == nil, let controller = notification.object as? GCController else { return }
+        setupController(controller)
+    }
+    
+    @objc func controllerDidDisconnect(_ notification: Notification) {
+        guard let controller = notification.object as? GCController, controller == gameController else { return }
+        gameController = nil
+        // Pick up another connected controller if available
+        if let next = GCController.controllers().first {
+            setupController(next)
+        }
+    }
+    
+    func setupController(_ controller: GCController) {
+        gameController = controller
+        
+        if let gamepad = controller.extendedGamepad {
+            setupExtendedGamepad(gamepad)
+        } else if let micro = controller.microGamepad {
+            setupMicroGamepad(micro)
+        }
+    }
+    
+    func setupExtendedGamepad(_ gamepad: GCExtendedGamepad) {
+        gamepad.dpad.valueChangedHandler = { [weak self] _, xValue, yValue in
+            guard let self = self, !self.pause else { return }
+            self.handleDpadInput(x: xValue, y: yValue)
+        }
+        
+        gamepad.leftThumbstick.valueChangedHandler = { [weak self] _, xValue, yValue in
+            guard let self = self, !self.pause else { return }
+            self.handleThumbstickInput(x: xValue, y: yValue)
+        }
+        
+        gamepad.buttonA.valueChangedHandler = { [weak self] _, _, pressed in
+            guard let self = self, pressed else { return }
+            self.triggerLightning()
+        }
+        
+        gamepad.buttonMenu.valueChangedHandler = { [weak self] _, _, pressed in
+            guard let self = self, pressed else { return }
+            self.pause = !self.pause
+            if self.pause {
+                self.sounds.stopMusic()
+                self.view?.alpha = 0.5
+                self.scene?.isPaused = true
+                #if os(tvOS)
+                self.menuView.isHidden = false
+                self.menuView.AskForFocus()
+                #endif
+            } else {
+                self.view?.alpha = 1.0
+                self.scene?.isPaused = false
+                self.sounds.playMusic(track: MUSICSFX.BonusBeats)
+                #if os(tvOS)
+                self.menuView.isHidden = true
+                #endif
+            }
+        }
+    }
+    
+    func setupMicroGamepad(_ micro: GCMicroGamepad) {
+        micro.dpad.valueChangedHandler = { [weak self] _, xValue, yValue in
+            guard let self = self, !self.pause else { return }
+            self.handleDpadInput(x: xValue, y: yValue)
+        }
+        
+        micro.buttonA.valueChangedHandler = { [weak self] _, _, pressed in
+            guard let self = self, pressed else { return }
+            self.triggerLightning()
+        }
+        
+        micro.buttonMenu.valueChangedHandler = { [weak self] _, _, pressed in
+            guard let self = self, pressed else { return }
+            self.pause = !self.pause
+            if self.pause {
+                self.sounds.stopMusic()
+                self.view?.alpha = 0.5
+                self.scene?.isPaused = true
+            } else {
+                self.view?.alpha = 1.0
+                self.scene?.isPaused = false
+                self.sounds.playMusic(track: MUSICSFX.BonusBeats)
+            }
+        }
+    }
+    
+    func handleDpadInput(x: Float, y: Float) {
+        if abs(x) > abs(y) {
+            if x > 0.5 { queueDirection(.right) }
+            else if x < -0.5 { queueDirection(.left) }
+        } else {
+            if y > 0.5 { queueDirection(.up) }
+            else if y < -0.5 { queueDirection(.down) }
+        }
+    }
+    
+    func handleThumbstickInput(x: Float, y: Float) {
+        let deadzone: Float = 0.3
+        var direction: Direction = .none
+        
+        if abs(x) > abs(y) {
+            if x > deadzone { direction = .right }
+            else if x < -deadzone { direction = .left }
+        } else {
+            if y > deadzone { direction = .up }
+            else if y < -deadzone { direction = .down }
+        }
+        
+        // Debounce: only send new direction when it changes
+        if direction != .none && direction != lastStickDirection {
+            lastStickDirection = direction
+            queueDirection(direction)
+        } else if direction == .none {
+            lastStickDirection = .none
+        }
+    }
+    
+    override func willMove(from view: SKView) {
+        teardownControllerObservers()
+    }
     
     
     
@@ -1518,27 +1644,10 @@ radarNode?.setScale(2.0)
         
         UpdatePassenger()
         
-        var s = 2
-        var i = 0
-        // If the bad guys have a path, follow it. Otherwise, head to the player. Destroy Will Robinson!
-        
-        if bonusLevel
-        {
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1,test: TestWall)
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1,test: TestWall)
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1,test: TestWall)
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1,test: TestWall)
-        }
-        else
-        {
+        // Player car movement
+        let playerSteps = bonusLevel ? 4 : (GoodGuy.speed == 4 ? 4 : 3)
+        for _ in 0..<playerSteps {
             GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1, test: TestWall)
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1, test: TestWall)
-            GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1, test: TestWall)
-            
-            if GoodGuy.speed == 4
-            {
-                GoodGuy.Update(direction : CalculateDirectionHuman, targetX: 0, targetY: 0, speed: 1, test: TestWall)
-            }
         }
         
         camera?.position = GoodGuy.position()
@@ -1558,120 +1667,33 @@ radarNode?.setScale(2.0)
             
             if bad.stuck
             {
-                // create plop
                 print("e - Make new path \(bad.carX), \(bad.carY)")
-                //  let From = convertCars(xx: Int((bad.carX)), yy: Int((bad.carY)))
-                // let To = convertCars(xx: Int(person.pickup_position().x), yy: Int(person.pickup_position().y))
-                //  bad.setPath(newPath: createPath(fromX: bad.carX, fromY: bad.carY, toX: 0, toY: 0))
-                //  bad.stuck = false
-                
             }
-            else
-            {
-                //   print("  No new path \(bad.carX, bad.carY)")
-            }
-            
         }
         
         
-        for bad in BadGuys
+        for (i, bad) in BadGuys.enumerated()
         {
             if (bad.path.count>0)
             {
+                // Base speed: 2 steps, or 4 for baddies after the 8th
+                var followCount = i > 7 ? 4 : 2
                 
-                bad.FollowPath(speed: 1)
-                bad.FollowPath(speed: 1)
+                // Level 13 enemies are much faster
+                if gameLevel == 13 { followCount += 60 }
                 
-                if s == 4
-                {
+                for _ in 0..<followCount {
                     bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                }
-                
-                if (gameLevel == 13)
-                {
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    bad.FollowPath(speed: 1)
-                    
                 }
                 
             }
             else
             {
-                //if bad.waitingForNewPath
-                // {
                 let From = convertCars(xx: Int((bad.carX)), yy: Int((bad.carY)))
                 let To = convertCars(xx: Int(GoodGuy.position().x), yy: Int(GoodGuy.position().y))
                 bad.setPath(newPath: createPath(fromX: From.0, fromY: From.1, toX: To.0, toY: To.1))
-                // }
                 
             }
-            
-            i += 1
-            
-            if (i>7) { s = 4 }
         }
         
         for looper in LoopGuys

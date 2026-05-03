@@ -11,6 +11,7 @@
 import SpriteKit
 import UIKit
 import GameplayKit
+import GameController
 
 class SettingsScene: SKScene {
 
@@ -20,6 +21,7 @@ class SettingsScene: SKScene {
     var settings = Settings()
     var level = 0
     var selected = 0
+    var gameController: GCController?
 
     var backSprite : SKSpriteNode?
     var option1Sprite : SKLabelNode?
@@ -84,6 +86,8 @@ class SettingsScene: SKScene {
         ButtonAppearance()
         touch = false
  
+        setupControllerObservers()
+        
     }
     
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
@@ -345,7 +349,58 @@ class SettingsScene: SKScene {
        
     }
     
+    // MARK: - Game Controller
+    
+    override func willMove(from view: SKView) {
+        teardownControllerObservers()
+    }
+    
+    func setupControllerObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(controllerDidConnect), name: .GCControllerDidConnect, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(controllerDidDisconnect), name: .GCControllerDidDisconnect, object: nil)
+        if let controller = GCController.controllers().first { setupController(controller) }
+    }
+    
+    func teardownControllerObservers() {
+        NotificationCenter.default.removeObserver(self, name: .GCControllerDidConnect, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .GCControllerDidDisconnect, object: nil)
+        gameController = nil
+    }
+    
+    @objc func controllerDidConnect(_ notification: Notification) {
+        guard gameController == nil, let controller = notification.object as? GCController else { return }
+        setupController(controller)
+    }
+    
+    @objc func controllerDidDisconnect(_ notification: Notification) {
+        guard let controller = notification.object as? GCController, controller == gameController else { return }
+        gameController = nil
+    }
+    
+    func setupController(_ controller: GCController) {
+        gameController = controller
+        
+        let dpadHandler: GCControllerDirectionPadValueChangedHandler = { [weak self] _, xValue, yValue in
+            guard let self = self else { return }
+            if yValue > 0.5 { self.swipedUp() }
+            else if yValue < -0.5 { self.swipedDown() }
+        }
+        
+        let buttonHandler: GCControllerButtonValueChangedHandler = { [weak self] _, _, pressed in
+            guard pressed else { return }
+            self?.tapped()
+        }
+        
+        if let extended = controller.extendedGamepad {
+            extended.dpad.valueChangedHandler = dpadHandler
+            extended.leftThumbstick.valueChangedHandler = dpadHandler
+            extended.buttonA.valueChangedHandler = buttonHandler
+        }
+        if let micro = controller.microGamepad {
+            micro.dpad.valueChangedHandler = dpadHandler
+            micro.buttonA.valueChangedHandler = buttonHandler
+        }
+    }
 
  
 }
-
