@@ -273,7 +273,7 @@ class GetReadyScene: SKScene {
     }
     
     
-    func swipedUp()
+    @objc func swipedUp()
     {
         
         // At the top, move to settings
@@ -296,7 +296,7 @@ class GetReadyScene: SKScene {
         
     }
     
-    func swipedDown()
+    @objc func swipedDown()
     {
      
         
@@ -319,7 +319,7 @@ class GetReadyScene: SKScene {
 
     }
     
-    func swipedLeft()
+    @objc func swipedLeft()
     {
         
         // if at settings, go to level 6
@@ -340,7 +340,7 @@ class GetReadyScene: SKScene {
 
     }
     
-    func swipedRight()
+    @objc func swipedRight()
     {
         
         if cursorY == 140
@@ -357,12 +357,12 @@ class GetReadyScene: SKScene {
         
     }
     
-    func menu()
+    @objc func menu()
     {
         print("Menu")
     }
     
-    func tapped()
+    @objc func tapped()
     {
         if (month == 100)
         {

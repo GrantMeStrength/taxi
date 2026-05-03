@@ -41,10 +41,11 @@ class MenuBottonView: UIView {
     }
 */
 
-    // If tvos
-    override var preferredFocusedView: UIView? {
-       // print("super focus? the button")
-        return buttonContinue
+    override var preferredFocusEnvironments: [UIFocusEnvironment] {
+        if let button = buttonContinue {
+            return [button]
+        }
+        return []
     }
 
 

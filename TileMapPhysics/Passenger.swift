@@ -35,7 +35,7 @@ class Passenger: NSObject {
         
         if (state == .sleeping)
         {
-             let diceRoll = Int(arc4random_uniform(FREQ) + 1)
+             let diceRoll = Int.random(in: 1...Int(FREQ))
             
             if (diceRoll == 1)
             {
@@ -82,7 +82,7 @@ class Passenger: NSObject {
     
     func randomName() -> String
     {
-        let r = Int(arc4random_uniform(10) + 1)
+        let r = Int.random(in: 1...10)
         
         switch (r)
         {

@@ -32,7 +32,7 @@ class WelcomeScene: SKScene {
     
     
     
-    func tapped(sender: UITapGestureRecognizer)
+    @objc func tapped(sender: UITapGestureRecognizer)
     {
         let scene = GetReadyScene(fileNamed: "GetReadyScene")!
         let transition = SKTransition.fade(with: UIColor.black, duration: 1)

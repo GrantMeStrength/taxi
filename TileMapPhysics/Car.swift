@@ -14,9 +14,9 @@ class Car: NSObject {
     
     struct DirectionAngle
     {
-        static let up : CGFloat = CGFloat(M_PI_2)
-        static let down : CGFloat = CGFloat(M_PI_2 * 3.0)
-        static let left : CGFloat = CGFloat(M_PI)
+        static let up : CGFloat = .pi / 2
+        static let down : CGFloat = .pi / 2 * 3.0
+        static let left : CGFloat = .pi
         static let right : CGFloat = 0
     }
     
@@ -157,7 +157,7 @@ class Car: NSObject {
             }
         }
 
-        print("StuckP - \(cx,cy,tx,ty)")
+        print("StuckP - \(cx), \(cy), \(tx), \(ty)")
         return .none
     }
     
@@ -233,7 +233,7 @@ class Car: NSObject {
         
         previousDirection = .none
         
-        print ("new path contains this first element\(position(), t)")
+        print ("new path contains this first element \(position()), \(t)")
         
      //   currentDirection = getDirection(car: (currentPosition.0, currentPosition.1), target: t)
         
@@ -621,7 +621,7 @@ class Car: NSObject {
         
         func randomDirection() -> Direction
         {
-            let diceRoll = Int(arc4random_uniform(4) + 1)
+            let diceRoll = Int.random(in: 1...4)
  
             switch (diceRoll)
             {

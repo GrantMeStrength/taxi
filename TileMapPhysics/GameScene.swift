@@ -377,7 +377,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             for i in 1...NUMBER_OF_PASSENGERS
             {
                 let person = Passenger()
-                person.Setup(passengerSprite: (childNode(withName: "Passenger\(i)") as? SKSpriteNode)!, dropoffSprite: (childNode(withName: "PassengerDrop\(i)") as? SKSpriteNode!)!)
+                person.Setup(passengerSprite: (childNode(withName: "Passenger\(i)") as! SKSpriteNode), dropoffSprite: (childNode(withName: "PassengerDrop\(i)") as! SKSpriteNode))
                 people.append(person)
                 
                 let pBlob = SKSpriteNode(color:.green,size:CGSize(width: 5, height : 5))
@@ -404,7 +404,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         
         GoodGuy.setSpritePlayer(carSprite: (childNode(withName: "Wheel") as? SKSpriteNode)!)
-        GoodGuy.setPosition(x: 0, y: 0, carangle: CGFloat(M_PI_2))
+        GoodGuy.setPosition(x: 0, y: 0, carangle: .pi / 2)
         
         // Headlights
         HeadlightsMask =  GoodGuy.sprite?.childNode(withName: "headlightsMask") as? SKSpriteNode
@@ -472,11 +472,11 @@ radarNode?.setScale(2.0)
         
         
         let tapRecognizer1 = UITapGestureRecognizer(target: self, action: #selector(self.tv_remote_pause))
-        tapRecognizer1.allowedPressTypes = [NSNumber(value: UIPressType.playPause.rawValue)];
+        tapRecognizer1.allowedPressTypes = [NSNumber(value: UIPress.PressType.playPause.rawValue)];
         self.view?.addGestureRecognizer(tapRecognizer1)
         
         let tapRecognizer2 = UITapGestureRecognizer(target: self, action: #selector(self.tv_remote_menu))
-        tapRecognizer2.allowedPressTypes = [NSNumber(value: UIPressType.menu.rawValue)];
+        tapRecognizer2.allowedPressTypes = [NSNumber(value: UIPress.PressType.menu.rawValue)];
         self.view?.addGestureRecognizer(tapRecognizer2)
         
         // The pause menu that appears on a SubView
@@ -488,15 +488,15 @@ radarNode?.setScale(2.0)
         
         let PlayButton = menuView.viewWithTag(1) as! UIButton
         let QuitButton = menuView.viewWithTag(2) as! UIButton
-        PlayButton.addTarget(self, action: #selector(GameScene.tapPlay(_:)), for: UIControlEvents.primaryActionTriggered)
-        QuitButton.addTarget(self, action: #selector(GameScene.tapQuit(_:)), for: UIControlEvents.primaryActionTriggered)
+        PlayButton.addTarget(self, action: #selector(GameScene.tapPlay(_:)), for: UIControl.Event.primaryActionTriggered)
+        QuitButton.addTarget(self, action: #selector(GameScene.tapQuit(_:)), for: UIControl.Event.primaryActionTriggered)
         
         menuView.AskForFocus()
         menuView.isHidden = true
         #endif
     }
     
-    func tapPlay(_ sender:UIButton!)
+    @objc func tapPlay(_ sender:UIButton!)
     {
          scene?.isPaused = false
         // Unpause game and continue
@@ -508,7 +508,7 @@ radarNode?.setScale(2.0)
         sounds.playMusic(track: MUSICSFX.BonusBeats)
     }
     
-    func tapQuit(_ sender:UIButton!)
+    @objc func tapQuit(_ sender:UIButton!)
     {
         
         // Quit game
@@ -527,7 +527,7 @@ radarNode?.setScale(2.0)
         
     }
     
-    func tv_remote_pause(sender : UITapGestureRecognizer) {
+    @objc func tv_remote_pause(sender : UITapGestureRecognizer) {
         
         // pause the game
         pause = !pause
@@ -547,7 +547,7 @@ radarNode?.setScale(2.0)
         
     }
     
-    func tv_remote_menu(sender : UITapGestureRecognizer) {
+    @objc func tv_remote_menu(sender : UITapGestureRecognizer) {
         self.view?.alpha = 1.0
          sounds.stopMusic()
         pause = true
@@ -561,7 +561,7 @@ radarNode?.setScale(2.0)
     
     
     
-    func tapped(sender: UITapGestureRecognizer)
+    @objc func tapped(sender: UITapGestureRecognizer)
     {
         
         
@@ -682,7 +682,7 @@ radarNode?.setScale(2.0)
     
     
     func addSwipe() {
-        let directions: [UISwipeGestureRecognizerDirection] = [.right, .left, .up, .down]
+        let directions: [UISwipeGestureRecognizer.Direction] = [.right, .left, .up, .down]
         for direction in directions {
             let gesture = UISwipeGestureRecognizer(target: self, action:#selector(handleSwipe))
             gesture.direction = direction
@@ -690,15 +690,15 @@ radarNode?.setScale(2.0)
         }
     }
     
-    func handleSwipe(sender: UISwipeGestureRecognizer) {
+    @objc func handleSwipe(sender: UISwipeGestureRecognizer) {
         
         
         switch (sender.direction)
         {
-        case UISwipeGestureRecognizerDirection.right :  GoodGuy.nextDirection = .right
-        case UISwipeGestureRecognizerDirection.left :  GoodGuy.nextDirection = .left
-        case UISwipeGestureRecognizerDirection.up :  GoodGuy.nextDirection = .up
-        case UISwipeGestureRecognizerDirection.down :  GoodGuy.nextDirection = .down
+        case UISwipeGestureRecognizer.Direction.right :  GoodGuy.nextDirection = .right
+        case UISwipeGestureRecognizer.Direction.left :  GoodGuy.nextDirection = .left
+        case UISwipeGestureRecognizer.Direction.up :  GoodGuy.nextDirection = .up
+        case UISwipeGestureRecognizer.Direction.down :  GoodGuy.nextDirection = .down
         default: break;
             
         }
@@ -1238,7 +1238,7 @@ radarNode?.setScale(2.0)
             
             if (p == nil)
             {
-                print("Bummer.. \(firstNode, secondNode)")
+                print("Bummer.. \(firstNode), \(secondNode)")
             }
             
             if (p?.state == .driving)
@@ -1371,7 +1371,7 @@ radarNode?.setScale(2.0)
         power.setPosition(pos: CGPoint(x:2000, y:2000))
         
         
-        if  (Int(arc4random_uniform(7) + 1) > 5) && !bonusLevel // DEBUG
+        if  (Int.random(in: 1...7) > 5) && !bonusLevel // DEBUG
         {
             power.setType(isTurbo: true)
             
@@ -1559,7 +1559,7 @@ radarNode?.setScale(2.0)
             if bad.stuck
             {
                 // create plop
-                print("e - Make new path \(bad.carX, bad.carY)")
+                print("e - Make new path \(bad.carX), \(bad.carY)")
                 //  let From = convertCars(xx: Int((bad.carX)), yy: Int((bad.carY)))
                 // let To = convertCars(xx: Int(person.pickup_position().x), yy: Int(person.pickup_position().y))
                 //  bad.setPath(newPath: createPath(fromX: bad.carX, fromY: bad.carY, toX: 0, toY: 0))
@@ -1702,7 +1702,7 @@ radarNode?.setScale(2.0)
             else
             {
                 
-                if (Int(arc4random_uniform(6) + 1) > 3) && !bonusLevel
+                if (Int.random(in: 1...6) > 3) && !bonusLevel
                 {
                     if (bonusLevel)
                     {
@@ -1789,7 +1789,7 @@ radarNode?.setScale(2.0)
         for bad in BadGuys
         {
             let r = RandomLocation()
-            bad.setPosition(x: Int(r.x), y: Int(r.y), carangle: CGFloat(M_PI_2))
+            bad.setPosition(x: Int(r.x), y: Int(r.y), carangle: .pi / 2)
             bad.forcePosition()
         }
         
@@ -1801,7 +1801,7 @@ radarNode?.setScale(2.0)
         }
         
         
-        GoodGuy.setPosition(x: 0, y: 0, carangle: CGFloat(M_PI_2))
+        GoodGuy.setPosition(x: 0, y: 0, carangle: .pi / 2)
         GoodGuy.StopBlinking()
         
         PickNewBatteryLocation()
@@ -2219,7 +2219,7 @@ radarNode?.setScale(2.0)
         
         if xx != xxx || yy != yyy
         {
-            print("Rounding error \(xx,yy,xxx,yyy)")
+            print("Rounding error \(xx), \(yy), \(xxx), \(yyy)")
             
         }
         
@@ -2246,7 +2246,7 @@ radarNode?.setScale(2.0)
         let pos = car.position()
         let angle = car.angle
         let spos = convertCars(xx: Int(pos.x), yy: Int(pos.y))
-        let tpos = unConvertCars(pos: int2(x: Int32(spos.0), y: Int32(spos.1)))
+        let tpos = unConvertCars(pos: SIMD2<Int32>(x: Int32(spos.0), y: Int32(spos.1)))
         car.setPosition(x: tpos.0, y: tpos.1, carangle: angle)
     }
     
@@ -2273,9 +2273,9 @@ radarNode?.setScale(2.0)
         
         while true {
             
-            let rows = Int32(arc4random_uniform(UInt32(numberOfRows)))
-            let cols = Int32(arc4random_uniform(UInt32(numberOfColumns)))
-            let path = roadGraph?.node(atGridPosition: int2(x: rows, y: cols))
+            let rows = Int32.random(in: 0..<Int32(numberOfRows))
+            let cols = Int32.random(in: 0..<Int32(numberOfColumns))
+            let path = roadGraph?.node(atGridPosition: SIMD2<Int32>(x: rows, y: cols))
             
             
             if (rows < 10 || rows > 20) && (cols < 10 || cols > 20) && path != nil
@@ -2302,9 +2302,9 @@ radarNode?.setScale(2.0)
         
         while true {
             
-            let rows = Int32(arc4random_uniform(UInt32(numberOfRows)))
-            let cols = Int32(arc4random_uniform(UInt32(numberOfColumns)))
-            let path = roadGraph?.node(atGridPosition: int2(x: rows, y: cols))
+            let rows = Int32.random(in: 0..<Int32(numberOfRows))
+            let cols = Int32.random(in: 0..<Int32(numberOfColumns))
+            let path = roadGraph?.node(atGridPosition: SIMD2<Int32>(x: rows, y: cols))
             
             
             if (rows < 13 || rows > 17) && (cols < 13 || cols > 17) && path != nil
@@ -2328,7 +2328,7 @@ radarNode?.setScale(2.0)
         let numberOfRows = Int((tileMap?.mapSize.width)!/CGFloat(tileWidth))
         let numberOfColumns = Int((tileMap?.mapSize.height)!/CGFloat(tileHeight))
         
-        let tempgraph = GKGridGraph(fromGridStartingAt: int2(0, 0), width: Int32(numberOfColumns), height: Int32(numberOfRows), diagonalsAllowed: false)
+        let tempgraph = GKGridGraph(fromGridStartingAt: SIMD2<Int32>(0, 0), width: Int32(numberOfColumns), height: Int32(numberOfRows), diagonalsAllowed: false)
         
         var walls : Array<GKGraphNode> = []
         
@@ -2341,7 +2341,7 @@ radarNode?.setScale(2.0)
                 if definition != nil
                 {
                     //print("X", terminator:"")
-                    walls.append(tempgraph.node(atGridPosition: int2(x:Int32(x), y:Int32(y)))!)
+                    walls.append(tempgraph.node(atGridPosition: SIMD2<Int32>(x:Int32(x), y:Int32(y)))!)
                 }
                 else
                 {
@@ -2387,8 +2387,8 @@ radarNode?.setScale(2.0)
         }
         
         
-        let carNode  = roadGraph?.node(atGridPosition: int2(x:Int32(fromX), y:Int32(fromY)))
-        let targetNode  = roadGraph?.node(atGridPosition: int2(x:Int32(toX), y:Int32(toY)))
+        let carNode  = roadGraph?.node(atGridPosition: SIMD2<Int32>(x:Int32(fromX), y:Int32(fromY)))
+        let targetNode  = roadGraph?.node(atGridPosition: SIMD2<Int32>(x:Int32(toX), y:Int32(toY)))
         
         
         if carNode == nil
@@ -2401,7 +2401,7 @@ radarNode?.setScale(2.0)
         
         if targetNode == nil
         {
-            print("Error - unable to get to target \(toX,toY, (toX - 15) * 64, (toY - 15) * 64)")
+            print("Error - unable to get to target \(toX), \(toY), \((toX - 15) * 64), \((toY - 15) * 64)")
             return pathStuff
         }
         
@@ -2409,7 +2409,7 @@ radarNode?.setScale(2.0)
         
         if path.count == 0
         {
-            print("Error - path error \(toX,toY, (toX - 15) * 64, (toY - 15) * 64)")
+            print("Error - path error \(toX), \(toY), \((toX - 15) * 64), \((toY - 15) * 64)")
             return pathStuff
         }
         
@@ -2492,7 +2492,8 @@ radarNode?.setScale(2.0)
         
         
         let burstPath = Bundle.main.path(forResource: "spark", ofType: "sks")
-        let burstNode = NSKeyedUnarchiver.unarchiveObject(withFile: burstPath!)  as! SKEmitterNode
+        let burstData = try! Data(contentsOf: URL(fileURLWithPath: burstPath!))
+        let burstNode = try! NSKeyedUnarchiver.unarchivedObject(ofClass: SKEmitterNode.self, from: burstData)!
         burstNode.position = GoodGuy.position()
         self.addChild(burstNode)
         
@@ -2506,7 +2507,8 @@ radarNode?.setScale(2.0)
         
         
         let smokePath = Bundle.main.path(forResource: "smoke", ofType: "sks")
-        let smokeNode = NSKeyedUnarchiver.unarchiveObject(withFile: smokePath!)  as! SKEmitterNode
+        let smokeData = try! Data(contentsOf: URL(fileURLWithPath: smokePath!))
+        let smokeNode = try! NSKeyedUnarchiver.unarchivedObject(ofClass: SKEmitterNode.self, from: smokeData)!
         smokeNode.position = GoodGuy.position()
         self.addChild(smokeNode)
         

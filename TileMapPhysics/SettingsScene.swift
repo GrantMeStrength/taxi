@@ -250,7 +250,7 @@ class SettingsScene: SKScene {
     }
     
     
-    func swipedUp()
+    @objc func swipedUp()
     {
         
        if selected == 2
@@ -262,7 +262,7 @@ class SettingsScene: SKScene {
         
     }
     
-    func swipedDown()
+    @objc func swipedDown()
     {
         if selected == 1
         {
@@ -272,7 +272,7 @@ class SettingsScene: SKScene {
         updateCursor()
     }
     
-    func swipedLeft()
+    @objc func swipedLeft()
     {
         if selected == 1 || selected == 2
 
@@ -283,7 +283,7 @@ class SettingsScene: SKScene {
         updateCursor()
     }
     
-    func swipedRight()
+    @objc func swipedRight()
     {
         if selected == 0
         {
@@ -326,7 +326,7 @@ class SettingsScene: SKScene {
 
     }
     
-    func tapped()
+    @objc func tapped()
     {
         if selected == 0
         {

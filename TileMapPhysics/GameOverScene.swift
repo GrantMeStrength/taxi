@@ -51,7 +51,7 @@ class GameOverScene: SKScene {
     
     
     
-    func tapped(sender: UITapGestureRecognizer)
+    @objc func tapped(sender: UITapGestureRecognizer)
     {
         if !alreadyDoneIt
         {
